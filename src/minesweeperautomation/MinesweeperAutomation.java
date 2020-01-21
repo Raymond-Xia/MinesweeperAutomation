@@ -8,11 +8,10 @@ import org.openqa.selenium.interactions.Actions;
 
 public class MinesweeperAutomation {
     private WebDriver driver;
-    private int x, y, adjs, flags;
-    private String[] s;
     private Actions action;
 
-    private boolean[][] doneGrid = new boolean[16][30];
+    private final boolean[][] doneGrid = new boolean[16][30];
+    private int[][] numGrid = new int[16][30];
     
     public static void main(String[] args){
         MinesweeperAutomation m = new MinesweeperAutomation();
@@ -30,47 +29,64 @@ public class MinesweeperAutomation {
         for (int j = 0; j < 16; j++) {
             for (int i = 0; i < 30; i++) {
                 doneGrid[j][i] = false;
+                numGrid[j][i] = -2;
             }
         }
 
         WebElement square;
-        int num, rowCellsDone;
+        int num;
 
         while (!driver.findElements(By.className("blank")).isEmpty()) {
             for (int height = 1; height <= 16; height++) {
                 for (int width = 1; width <= 30; width++) {
-                    square = driver.findElement(By.id(height + "_" + width));
-                    num = Character.getNumericValue(square.getAttribute("class").toCharArray()[11]);
-
-                    if (num >= 0 && num < 9 && !doneGrid[height-1][width-1]) {
-                        if (num == 0) {
+                    if (numGrid[height-1][width-1] == -2) {
+                        square = driver.findElement(By.id(height + "_" + width));
+                        num = square.getAttribute("class").toCharArray()[11];
+                        
+                        if (num == 'f') {
+                            numGrid[height - 1][width - 1] = -1;
+                        } else if (Character.getNumericValue(num) >= 0 && Character.getNumericValue(num) < 9) {
+                            numGrid[height - 1][width - 1] = Character.getNumericValue(num);
+                        }
+                    }
+                    
+                    if (numGrid[height-1][width-1] >= 0 && numGrid[height-1][width-1] < 9 && !doneGrid[height-1][width-1]) {
+                        if (numGrid[height-1][width-1] == 0) {
                             doneGrid[height-1][width-1] = true;
-                        } else if (countAdj(square) == num) {
-                            flagAdj(square);
+                        } else if (countAdj(height, width) == numGrid[height-1][width-1]) {
+                            flagAdj(height, width);
                             doneGrid[height-1][width-1] = true;
-                        } else if (countFlags(square) == num) {
-                            revealAdj(square);
+                        } else if (countFlags(height, width) == numGrid[height-1][width-1]) {
+                            revealAdj(height, width);
                             doneGrid[height-1][width-1] = true;
                         }
-
                     }
 
                     System.out.println(height + "_" + width);
                 }
             }
+            
             for (int height = 16; height >= 1; height--) {
                 for (int width = 30; width >= 1; width--) {
-                    square = driver.findElement(By.id(height + "_" + width));
-                    num = Character.getNumericValue(square.getAttribute("class").toCharArray()[11]);
-
-                    if (num >= 0 && num < 9 && !doneGrid[height-1][width-1]) {
-                        if (num == 0) {
+                    if (numGrid[height-1][width-1] == -2) {
+                        square = driver.findElement(By.id(height + "_" + width));
+                        num = square.getAttribute("class").toCharArray()[11];
+                        
+                        if (num == 'f') {
+                            numGrid[height - 1][width - 1] = -1;
+                        } else if (Character.getNumericValue(num) >= 0 && Character.getNumericValue(num) < 9) {
+                            numGrid[height - 1][width - 1] = Character.getNumericValue(num);
+                        } 
+                    }
+                    
+                    if (numGrid[height-1][width-1] >= 0 && numGrid[height-1][width-1] < 9 && !doneGrid[height-1][width-1]) {
+                        if (numGrid[height-1][width-1] == 0) {
                             doneGrid[height-1][width-1] = true;
-                        } else if (countAdj(square) == num) {
-                            flagAdj(square);
+                        } else if (countAdj(height, width) == numGrid[height-1][width-1]) {
+                            flagAdj(height, width);
                             doneGrid[height-1][width-1] = true;
-                        } else if (countFlags(square) == num) {
-                            revealAdj(square);
+                        } else if (countFlags(height, width) == numGrid[height-1][width-1]) {
+                            revealAdj(height, width);
                             doneGrid[height-1][width-1] = true;
                         }
                     }
@@ -81,12 +97,8 @@ public class MinesweeperAutomation {
         } 
     }
 
-    private int countAdj(WebElement e) {
-        s = e.getAttribute("id").split("_");
-
-        y = Integer.parseInt(s[0]);
-        x = Integer.parseInt(s[1]);
-        adjs = 0;
+    private int countAdj(int y, int x) {
+        int adjs = 0;
 
         if (y > 1) {
             if (x > 1) {
@@ -131,12 +143,8 @@ public class MinesweeperAutomation {
         return adjs;
     }
 
-    private int countFlags(WebElement e) {
-        s = e.getAttribute("id").split("_");
-
-        y = Integer.parseInt(s[0]);
-        x = Integer.parseInt(s[1]);
-        flags = 0;
+    private int countFlags(int y, int x) {
+        int flags = 0;
 
         if (y > 1) {
             if (x > 1) {
@@ -181,11 +189,7 @@ public class MinesweeperAutomation {
         return flags;
     }
 
-    private void flagAdj(WebElement e) {
-        s = e.getAttribute("id").split("_");
-        y = Integer.parseInt(s[0]);
-        x = Integer.parseInt(s[1]);
-
+    private void flagAdj(int y, int x) {
         action = new Actions(driver);
 
         if (y > 1) {
@@ -230,10 +234,7 @@ public class MinesweeperAutomation {
         }
     }
 
-    private void revealAdj(WebElement e) {
-        s = e.getAttribute("id").split("_");
-        y = Integer.parseInt(s[0]);
-        x = Integer.parseInt(s[1]);
+    private void revealAdj(int y, int x) {
         WebElement element;
 
         if (y > 1) {
