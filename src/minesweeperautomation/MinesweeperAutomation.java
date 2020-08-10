@@ -19,7 +19,7 @@ public class MinesweeperAutomation {
     }
 	
     public void testClick() {
-        System.setProperty("webdriver.chrome.driver", "C:\\Users\\Raymond\\Downloads\\chromedriver_win32\\chromedriver.exe");
+        System.setProperty("webdriver.chrome.driver", "chromedriver.exe");
         driver = new ChromeDriver();
 
         driver.get("http://www.minesweeperonline.com");
